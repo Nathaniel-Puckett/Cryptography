@@ -7,7 +7,22 @@ ALPHABET = [['E', 12.2], ['T', 8.8], ['A', 7.9], ['O', 7.2], ['I', 6.8],
             ['V', 1.0], ['K', 0.8], ['J', 0.2], ['X', 0.2], ['Z', 0.1],
             ['Q', 0.1]]
 
-def frequency_analysis(text:str):
+
+def frequency_analysis(text: str) -> list[list]:
+    """
+    Does frequency analysis on a given string.
+
+    Parameters
+    ----------
+    text : str
+        Text to analyze
+
+    Returns
+    -------
+    frequencies : list[list]
+        Frequencies of letters sorted from most to least common
+    """
+
     frequencies = dict()
     text = text.upper()
 
@@ -22,30 +37,59 @@ def frequency_analysis(text:str):
 
     return frequencies
 
-def shift(mode:str, text:str, s:int):
+
+def shift(mode: str, text: str, s: int) -> str:
+    """
+    Applies the shift cipher
+
+    Parameters
+    ----------
+    mode : str
+        'e' for encryption, 'd' for decryption
+    text : str
+        Text to analyze
+    s : int
+        Amount to shift by
+
+    Returns
+    -------
+    message : str
+        Plaintext/ciphertext of input text
+    """
+
     message = str()
     text = text.lower()
     s = s * (1 if mode == 'e' else -1)
 
     for char in text:
         x = ord(char) - 97
-        e_char = (x+s)%26
-        message += chr(e_char+97)
+        e_char = (x+s) % 26
+        message += chr(e_char + 97)
     
     return message
 
-def fa_shift(text:str, num_search:int): #uses frequency analysis on shift
-    messages = str()
-    frequencies = frequency_analysis(text)
 
-    for frequency in frequencies[:num_search]:
-        s = (ord(frequency[0]) - ord('A'))%26
-        messages += '\n' + f'Shifted {str(s)} (A = {shift('e', 'A', s).upper()})'
-        messages += '\n' + shift('d', text, s) + '\n'
+def affine(mode: str, text: str, a: int, b: int) -> str:
+    """
+    Applies the Affine cipher
 
-    return messages
+    Parameters
+    ----------
+    mode : str
+        'e' for encryption, 'd' for decryption
+    text : str
+        Text to analyze
+    a : int
+        Multiplicative part of the key, must have an inverse
+    b : int
+        Additive part of the key
 
-def affine(mode:str, text:str, a:int, b:int):
+    Returns
+    -------
+    message : str
+        Plaintext/ciphertext of input text
+    """
+
     message = str()
     text = text.lower()
 
@@ -58,14 +102,33 @@ def affine(mode:str, text:str, a:int, b:int):
     for char in text:
         x = ord(char) - 97
         if mode == 'e':
-            e_char = (a*x + b)%26
+            e_char = (a*x + b) % 26
         elif mode == 'd':
-            e_char = (a_i*(x-b))%26
-        message += chr(e_char+97)
+            e_char = (a_i * (x-b)) % 26
+        message += chr(e_char + 97)
 
     return message
 
-def vigenere(mode:str, text:str, key:str):
+
+def vigenere(mode: str, text: str, key: str) -> str:
+    """
+    Applies the Vigenere cipher
+
+    Parameters
+    ----------
+    mode : str
+        'e' for encryption, 'd' for decryption
+    text : str
+        Text to analyze
+    key : str
+        Key word to use for encryption/decryption
+
+    Returns
+    -------
+    message : str
+        Plaintext/ciphertext of input text
+    """
+
     message = str()
     text = text.lower()
     key_vals = [ord(char)-97 for char in key]
@@ -73,12 +136,31 @@ def vigenere(mode:str, text:str, key:str):
     for i in range(len(text)):
         x = ord(text[i]) - 97
         k = key_vals[i % len(key)] * (1 if mode == 'e' else -1)
-        e_char = (x+k)%26
-        message += chr(e_char+97)
+        e_char = (x+k) % 26
+        message += chr(e_char + 97)
 
     return message
 
-def hill(mode:str, text:str, matrix):
+
+def hill(mode: str, text: str, matrix) -> str:
+    """
+    Applies the Hill cipher
+
+    Parameters
+    ----------
+    mode : str
+        'e' for encryption, 'd' for decryption
+    text : str
+        Text to analyze
+    matrix : numpy array
+        Square invertible matrix used as key
+
+    Returns
+    -------
+    message : str
+        Plaintext/ciphertext of input text
+    """
+
     message = str()
     text = text.lower()
     m = len(matrix)
@@ -86,7 +168,7 @@ def hill(mode:str, text:str, matrix):
     if mode == 'd':
         det = int(round(np.linalg.det(matrix), 0))
         det_inv = pow(det, -1, 26)
-        matrix = (np.linalg.inv(matrix)*det*det_inv)%26
+        matrix = (np.linalg.inv(matrix)*det*det_inv) % 26
 
     for i in range(0, len(text), m):
         v_a = np.array([[ord(char)-97] for char in text[i:i+m]])
@@ -96,7 +178,26 @@ def hill(mode:str, text:str, matrix):
 
     return message
 
-def permutation(mode:str, text:str, ordering:list):
+
+def permutation(mode: str, text: str, ordering: list) -> str:
+    """
+    Applies the permutation cipher
+
+    Parameters
+    ----------
+    mode : str
+        'e' for encryption, 'd' for decryption
+    text : str
+        Text to analyze
+    ordering : list
+        New ordering of letters from plaintext
+
+    Returns
+    -------
+    message : str
+        Plaintext/ciphertext of input text
+    """
+
     message = str()
     text = text.lower()
     m = len(ordering)
@@ -116,25 +217,85 @@ def permutation(mode:str, text:str, ordering:list):
 
     return message
 
-def autokey(mode:str, text:str, key:int):
+
+def autokey(mode: str, text: str, key: int) -> str:
+    """
+    Applies the autokey cipher
+
+    Parameters
+    ----------
+    mode : str
+        'e' for encryption, 'd' for decryption
+    text : str
+        Text to analyze
+    key : int
+        Key for shifting first letter
+
+    Returns
+    -------
+    message : str
+        Plaintext/ciphertext of input text
+    """
+
     message = str()
     text = text.lower()
     s = key
 
     for char in text: 
         x = ord(char) - 97
-        e_char = (x + (s if mode == 'e' else -s))%26
-        message += chr(e_char+97)
+        e_char = (x + (s if mode == 'e' else -s)) % 26
+        message += chr(e_char + 97)
         s = (x if mode == 'e' else e_char)
 
     return message
 
-def bf_autokey(text:str): #uses brute force on autokey
+
+def bf_shift(text: str) -> str:
+    """
+    Brute forces the shift cipher
+
+    Parameters
+    ----------
+    text : str
+        Text to analyze
+
+    Returns
+    -------
+    messages : str
+        Possible plaintexts of input text
+    """
+
+    messages = str()
+    frequencies = frequency_analysis(text)
+
+    for frequency in frequencies:
+        s = (ord(frequency[0])-ord('A')) % 26
+        messages += '\n' + f'Shifted {str(s)} (A = {shift('e', 'A', s).upper()})'
+        messages += '\n' + shift('d', text, s) + '\n'
+
+    return messages
+
+
+def bf_autokey(text: str) -> str:
+    """
+    Brute forces the autokey cipher
+
+    Parameters
+    ----------
+    text : str
+        Text to analyze
+
+    Returns
+    -------
+    messages : str
+        Possible plaintexts of input text
+    """
+
     messages = str()
     text = text.lower()
 
     for key in range(26):
         attempt = autokey('d', text, key)
-        messages += '\n' + f'{chr(key+97)} : {attempt}' + '\n'
+        messages += '\n' + f'{chr(key + 97)} : {attempt}' + '\n'
 
     return messages
