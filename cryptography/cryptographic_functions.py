@@ -1,11 +1,18 @@
 import numpy as np
 
-ALPHABET = [['E', 12.2], ['T', 8.8], ['A', 7.9], ['O', 7.2], ['I', 6.8], 
-            ['N', 6.5], ['S', 6.1], ['H', 5.9], ['R', 5.8], ['D', 4.1], 
-            ['L', 3.9], ['C', 2.7], ['U', 2.7], ['M', 2.3], ['W', 2.3], 
-            ['F', 2.1], ['G', 1.9], ['Y', 1.9], ['P', 1.8], ['B', 1.4], 
-            ['V', 1.0], ['K', 0.8], ['J', 0.2], ['X', 0.2], ['Z', 0.1],
-            ['Q', 0.1]]
+F_ALPHABET = [['E', 12.2], ['T', 8.8], ['A', 7.9], ['O', 7.2], ['I', 6.8], 
+              ['N', 6.5], ['S', 6.1], ['H', 5.9], ['R', 5.8], ['D', 4.1], 
+              ['L', 3.9], ['C', 2.7], ['U', 2.7], ['M', 2.3], ['W', 2.3], 
+              ['F', 2.1], ['G', 1.9], ['Y', 1.9], ['P', 1.8], ['B', 1.4], 
+              ['V', 1.0], ['K', 0.8], ['J', 0.2], ['X', 0.2], ['Z', 0.1],
+              ['Q', 0.1]]
+
+S_ALPHABET = [['A', 7.9], ['B', 1.4], ['C', 2.7], ['D', 4.1], ['E', 12.2], 
+              ['F', 2.1], ['G', 1.9], ['H', 5.9], ['I', 6.8], ['J', 0.2], 
+              ['K', 0.8], ['L', 3.9], ['M', 2.3], ['N', 6.5], ['O', 7.2], 
+              ['P', 1.8], ['Q', 0.1], ['R', 5.8], ['S', 6.1], ['T', 8.8], 
+              ['U', 2.7], ['V', 1.0], ['W', 2.3], ['X', 0.2], ['Y', 1.9], 
+              ['Z', 0.1]]
 
 
 def frequency_analysis(text: str) -> list[list]:
@@ -32,11 +39,49 @@ def frequency_analysis(text: str) -> list[list]:
                 frequencies[char] += 1
             else:
                 frequencies[char] = 1
+    for letter in S_ALPHABET:
+        if letter[0] not in frequencies:
+            frequencies[letter[0]] = 0
+    
     frequencies = [[key, val] for key, val in frequencies.items()]
     frequencies.sort(key = lambda x: x[1], reverse = True)
 
     return frequencies
 
+
+def index_coincidence(text: str) -> float:
+    frequencies = frequency_analysis(text)
+    n = len(text)
+
+    total = sum([(f[1]**2 - f[1]) / (n**2 - n) for f in frequencies])
+    
+    return total
+
+
+def vigenere_analysis(text, key_len):
+    y_list = [[] for i in range(key_len)]
+    m_list = []
+    best_guess = ''
+
+    for i, char in enumerate(text):
+        y_list[i%key_len].append(char)
+    
+    for k, y_i in enumerate(y_list):
+        y_text = ''.join(y_i)
+        y_frequencies = frequency_analysis(y_text)
+        y_frequencies.sort(key = lambda x: x[0])
+        n = len(y_text)
+
+        i_list = []
+        for j in range(26):
+            m_i = 0
+            for i, alph in enumerate(S_ALPHABET):
+                m_i += (alph[1] * y_frequencies[(i+j)%26][1]) / n
+            i_list.append([m_i, chr(j+97)])
+        i_list.sort(key = lambda x: x[0], reverse=True)
+        m_list.append([f'Possible values for the key at {k}', i_list[:3]])
+        best_guess += i_list[0][1]
+    return m_list, best_guess
 
 def shift(mode: str, text: str, s: int) -> str:
     """
