@@ -50,6 +50,20 @@ def frequency_analysis(text: str) -> list[list]:
 
 
 def index_coincidence(text: str) -> float:
+    """
+    Finds the index of coincidence for a string
+
+    Parameters
+    ----------
+    text : str
+        Text to analyze
+
+    Returns
+    -------
+    total : float
+        Index of coincidence of string
+    """
+
     frequencies = frequency_analysis(text)
     n = len(text)
 
@@ -58,30 +72,51 @@ def index_coincidence(text: str) -> float:
     return total
 
 
-def vigenere_analysis(text, key_len):
+def vigenere_analysis(text: str, key_len: int):
+    """
+    Does frequency analysis on a given string.
+
+    Parameters
+    ----------
+    text : str
+        Text to analyze
+    key_len : int
+        (Guessed) length of key, can be found through the Kasiski test
+
+    Returns
+    -------
+    best_list : list[list[list]]
+        List of each possible key value with index of coincidence
+    best_guess : str
+        String with all the most likely key candidates
+    """
+
     y_list = [[] for i in range(key_len)]
-    m_list = []
+    best_list = []
     best_guess = ''
 
     for i, char in enumerate(text):
         y_list[i%key_len].append(char)
     
-    for k, y_i in enumerate(y_list):
+    for index, y_i in enumerate(y_list):
         y_text = ''.join(y_i)
         y_frequencies = frequency_analysis(y_text)
         y_frequencies.sort(key = lambda x: x[0])
         n = len(y_text)
 
-        i_list = []
-        for j in range(26):
+        ic_list = []
+        for i in range(26):
             m_i = 0
-            for i, alph in enumerate(S_ALPHABET):
+            for j, alph in enumerate(S_ALPHABET):
                 m_i += (alph[1] * y_frequencies[(i+j)%26][1]) / n
-            i_list.append([m_i, chr(j+97)])
-        i_list.sort(key = lambda x: x[0], reverse=True)
-        m_list.append([f'Possible values for the key at {k}', i_list[:3]])
-        best_guess += i_list[0][1]
-    return m_list, best_guess
+            ic_list.append([m_i, chr(i+97)])
+        ic_list.sort(key = lambda x: x[0], reverse=True)
+
+        best_list.append([f'Possible values for the key at {index}', ic_list[:3]])
+        best_guess += ic_list[0][1]
+
+    return best_list, best_guess
+
 
 def shift(mode: str, text: str, s: int) -> str:
     """
