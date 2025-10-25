@@ -1,4 +1,5 @@
 import numpy as np
+from .binary_functions import *
 
 F_ALPHABET = [['E', 12.2], ['T', 8.8], ['A', 7.9], ['O', 7.2], ['I', 6.8], 
               ['N', 6.5], ['S', 6.1], ['H', 5.9], ['R', 5.8], ['D', 4.1], 
@@ -330,28 +331,6 @@ def autokey(mode: str, text: str, key: int) -> str:
     return message
 
 
-def bit_to_str(bits: list) -> str:
-    """
-    Converts bits from list type to string type
-
-    Parameters
-    ----------
-    bits : list
-        list of bits to convert
-
-    Returns
-    -------
-    bit_str : str
-        bits formatted as a string
-    """
-
-    bit_str = str()
-    for bit in bits:
-        bit_str += str(bit)
-
-    return bit_str
-
-
 def SPN(plaintext: list, keys: list[list], s_boxes: dict[list], permutation: list) -> list:
     """
     Encrypts using the SPN (Substitution Permutation Network) cipher
@@ -380,28 +359,20 @@ def SPN(plaintext: list, keys: list[list], s_boxes: dict[list], permutation: lis
     rounds = len(keys) - 1
     for round in range(rounds):
         #Add key
-        key = keys[round]
-        for i in range(len(bits)):
-            bits[i] = (bits[i]+key[i]) % 2
-        print(f'u^{round+1} : {bit_to_str(bits)}')
+        bits = XOR(keys[round], bits)
+        print(f'u^{round+1} : {bin_to_str(bits)}')
         #Apply s-boxes
         for i in range(0, len(bits), s_len):
             chunk = tuple(bits[i:i+s_len])
             bits[i:i+s_len] = s_boxes[chunk]
-        print(f'v^{round+1} : {bit_to_str(bits)}')
+        print(f'v^{round+1} : {bin_to_str(bits)}')
         #Permute
         if round != rounds-1:
-            new_bits = list()
-            for p in permutation:
-                p = p-1
-                new_bits.append(bits[p])
-            bits = new_bits
-            print(f'w^{round+1} : {bit_to_str(bits)}')
+            bits = permute(bits, permutation)
+            print(f'w^{round+1} : {bin_to_str(bits)}')
             print()
     #Final key addition
-    key = keys[-1]
-    for i in range(len(bits)):
-        bits[i] = (bits[i]+key[i]) % 2
+    bits = XOR(keys[-1], bits)
     
     return bits
 
@@ -431,12 +402,8 @@ def feistel(plaintext: list, keys: list, func, permutation: list) -> list:
     bits = plaintext
 
     #Initial permutation
-    new_bits = list()
-    for p in permutation:
-        p = p-1
-        new_bits.append(bits[p])
-    bits = new_bits
-    print(f'p : {bit_to_str(bits)}')
+    bits = permute(bits, permutation)
+    print(f'p : {bin_to_str(bits)}')
 
     #Rounds
     rounds = len(keys)
@@ -446,21 +413,16 @@ def feistel(plaintext: list, keys: list, func, permutation: list) -> list:
         l_bits = bits[:half]
         r_bits = bits[half:]
         f_bits = func(r_bits, key)
-        for i in range(len(r_bits)):
-            r_bits[i] = (f_bits[i]+l_bits[i]) % 2
+        r_bits = XOR(f_bits, l_bits)
         bits = bits[half:] + r_bits
-        print(f'r^{round+1} : {bit_to_str(bits)}')
+        print(f'r^{round+1} : {bin_to_str(bits)}')
     
     #Final permutation
-    new_bits = list()
     inverse = [0] * len(permutation)
     for i in range(len(permutation)):
         inverse[permutation[i]-1] = i + 1
-    for p in inverse:
-        p = p-1
-        new_bits.append(bits[p])
-    bits = new_bits
-    print(f'p^-1 : {bit_to_str(bits)}')
+    bits = permute(bits, inverse)
+    print(f'p^-1 : {bin_to_str(bits)}')
 
     return bits
 
