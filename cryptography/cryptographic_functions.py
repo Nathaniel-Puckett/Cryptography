@@ -330,6 +330,93 @@ def autokey(mode: str, text: str, key: int) -> str:
     return message
 
 
+def bit_to_str(bits: list) -> list:
+    bit_str = str()
+    for bit in bits:
+        bit_str += str(bit)
+
+    return bit_str
+
+
+def SPN(plaintext: list, keys: list, s_boxes: dict, permutation: list) -> list:
+    bits = plaintext
+    s_len = len(list(s_boxes)[0])
+
+    rounds = len(keys) - 1
+    for round in range(rounds):
+        #Add key
+        key = keys[round]
+        for i in range(len(bits)):
+            bits[i] = (bits[i]+key[i]) % 2
+        print(f'u^{round+1} : {bit_to_str(bits)}')
+        #Apply s-boxes
+        for i in range(0, len(bits), s_len):
+            chunk = tuple(bits[i:i+s_len])
+            bits[i:i+s_len] = s_boxes[chunk]
+        print(f'v^{round+1} : {bit_to_str(bits)}')
+        #Permute
+        if round != rounds-1:
+            new_bits = list()
+            for p in permutation:
+                p = p-1
+                new_bits.append(bits[p])
+            bits = new_bits
+            print(f'w^{round+1} : {bit_to_str(bits)}')
+            print()
+    #Final key addition
+    key = keys[-1]
+    for i in range(len(bits)):
+        bits[i] = (bits[i]+key[i]) % 2
+    
+    return bits
+
+
+def fiestel(plaintext: list, keys: list, func, permutation: list) -> list:
+    bits = plaintext
+
+    #Initial permutation
+    new_bits = list()
+    for p in permutation:
+        p = p-1
+        new_bits.append(bits[p])
+    bits = new_bits
+    print(f'p : {bit_to_str(bits)}')
+
+    #Rounds
+    rounds = len(keys)
+    half = int(len(bits)/2)
+    for round in range(rounds):
+        key = keys[round]
+        l_bits = bits[:half]
+        r_bits = bits[half:]
+        f_bits = func(r_bits, key)
+        for i in range(len(r_bits)):
+            r_bits[i] = (f_bits[i]+l_bits[i]) % 2
+        bits = bits[half:] + r_bits
+        print(f'r^{round+1} : {bit_to_str(bits)}')
+    
+    #Final permutation
+    new_bits = list()
+    inverse = [0] * len(permutation)
+    for i in range(len(permutation)):
+        inverse[permutation[i]-1] = i + 1
+    for p in inverse:
+        p = p-1
+        new_bits.append(bits[p])
+    bits = new_bits
+    print(f'p^-1 : {bit_to_str(bits)}')
+    return bits
+
+
+def example_rule(r_bits, key):
+    f_bits = list()
+    for i in range(len(key)):
+        val = (r_bits[i]+key[i]) % 2
+        f_bits.append(val)
+    
+    return f_bits
+
+
 def bf_shift(text: str) -> str:
     """
     Brute forces the shift cipher
