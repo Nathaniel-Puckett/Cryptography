@@ -377,7 +377,7 @@ def SPN(plaintext: list, keys: list[list], s_boxes: dict[list], permutation: lis
     return bits
 
 
-def feistel(plaintext: list, keys: list, func, permutation: list) -> list:
+def feistel(plaintext: list, keys: list, permutation: list, func, **kwargs) -> list:
     """
     Encrypts using the Feistel cipher
     #need to add decryption
@@ -409,10 +409,9 @@ def feistel(plaintext: list, keys: list, func, permutation: list) -> list:
     rounds = len(keys)
     half = int(len(bits)/2)
     for round in range(rounds):
-        key = keys[round]
         l_bits = bits[:half]
         r_bits = bits[half:]
-        f_bits = func(r_bits, key)
+        f_bits = func(r_bits, keys[round], **kwargs)
         r_bits = XOR(f_bits, l_bits)
         bits = bits[half:] + r_bits
         print(f'r^{round+1} : {bin_to_str(bits)}')
@@ -427,6 +426,56 @@ def feistel(plaintext: list, keys: list, func, permutation: list) -> list:
     return bits
 
 
+def DES(r_bits, key, exp, red, perm):
+    """
+    DES function used in Feistel cipher
+
+    Parameters
+    ----------
+    r_bits : list
+        bits from the right hand side of the total bitstring
+    key : list
+        key represented as bits
+    exp : list
+        expansion rule (32->48 bits)
+    red : list[list]
+        reduction rule (48->32 bits) given as a matrix where the first two bits give the row
+        and the last four bits give column
+    perm : list
+        final permutation to use on each set of 8 bits
+    
+    Returns
+    -------
+    f_bits : list
+        resulting bits from the function
+    """
+
+    #Expansion
+    f_bits = list()
+    for val in exp:
+        f_bits.append(r_bits[val-1])
+    #Add key
+    f_bits = XOR(f_bits, key)
+    #Reduction
+    new_bits = list()
+    for i in range(0, len(f_bits), 6):
+        row, column = tuple(f_bits[i:i+2]), tuple(f_bits[i+2:i+6])
+        r_val = bin_to_int(row)
+        c_val = bin_to_int(column)
+        num = red[r_val][c_val]
+        reduced_bits = int_to_bin(num, 4)
+        new_bits.extend(reduced_bits)
+    f_bits = new_bits
+    #Permutation
+    p_bits = list()
+    for i in range(0, len(f_bits), 8):
+        chunk = tuple(f_bits[i:i+8])
+        p_bits.extend(permute(chunk, perm))
+    f_bits = p_bits
+
+    return f_bits
+
+
 def example_rule(r_bits: list, key: list) -> list:
     """
     Example of a function used in the Feistel cipher
@@ -436,7 +485,7 @@ def example_rule(r_bits: list, key: list) -> list:
     ----------
     r_bits : list
         bits from the right hand side of the total bitstring
-    keys : list
+    key : list
         key represented as bits
 
     Returns
