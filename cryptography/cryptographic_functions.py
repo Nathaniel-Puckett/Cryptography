@@ -406,9 +406,9 @@ def SPN(plaintext: list, keys: list[list], s_boxes: dict[list], permutation: lis
     return bits
 
 
-def fiestel(plaintext: list, keys: list, func, permutation: list) -> list:
+def feistel(plaintext: list, keys: list, func, permutation: list) -> list:
     """
-    Encrypts using the Fiestel cipher
+    Encrypts using the Feistel cipher
     #need to add decryption
 
     Parameters
@@ -467,7 +467,7 @@ def fiestel(plaintext: list, keys: list, func, permutation: list) -> list:
 
 def example_rule(r_bits: list, key: list) -> list:
     """
-    Example of a function used in the Fiestel cipher
+    Example of a function used in the Feistel cipher
     (Note that all functions must use the same number and type of inputs/outputs)
     
     Parameters
