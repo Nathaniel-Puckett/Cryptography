@@ -17,7 +17,7 @@ S_ALPHABET = [['A', 7.9], ['B', 1.4], ['C', 2.7], ['D', 4.1], ['E', 12.2],
 
 def frequency_analysis(text: str) -> list[list]:
     """
-    Does frequency analysis on a given string.
+    Computes the frequency of alphabetical characters for a given string.
 
     Parameters
     ----------
@@ -51,7 +51,7 @@ def frequency_analysis(text: str) -> list[list]:
 
 def index_coincidence(text: str) -> float:
     """
-    Finds the index of coincidence for a string
+    Finds the index of coincidence for some text
 
     Parameters
     ----------
@@ -74,7 +74,7 @@ def index_coincidence(text: str) -> float:
 
 def vigenere_analysis(text: str, key_len: int):
     """
-    Does frequency analysis on a given string.
+    Finds possible keys for ciphertext encrypted with the vigenere cipher
 
     Parameters
     ----------
@@ -120,7 +120,7 @@ def vigenere_analysis(text: str, key_len: int):
 
 def shift(mode: str, text: str, s: int) -> str:
     """
-    Applies the shift cipher
+    Encrypts/decrypts text using the shift cipher
 
     Parameters
     ----------
@@ -151,7 +151,7 @@ def shift(mode: str, text: str, s: int) -> str:
 
 def affine(mode: str, text: str, a: int, b: int) -> str:
     """
-    Applies the Affine cipher
+    Encrypts/decrypts text using the Affine cipher
 
     Parameters
     ----------
@@ -192,7 +192,7 @@ def affine(mode: str, text: str, a: int, b: int) -> str:
 
 def vigenere(mode: str, text: str, key: str) -> str:
     """
-    Applies the Vigenere cipher
+    Encrypts/decrypts text using the Vigenere cipher
 
     Parameters
     ----------
@@ -224,7 +224,7 @@ def vigenere(mode: str, text: str, key: str) -> str:
 
 def hill(mode: str, text: str, matrix) -> str:
     """
-    Applies the Hill cipher
+    Encrypts/decrypts text using the Hill cipher
 
     Parameters
     ----------
@@ -261,7 +261,7 @@ def hill(mode: str, text: str, matrix) -> str:
 
 def permutation(mode: str, text: str, ordering: list) -> str:
     """
-    Applies the permutation cipher
+    Encrypts/decrypts text using the permutation cipher
 
     Parameters
     ----------
@@ -300,7 +300,7 @@ def permutation(mode: str, text: str, ordering: list) -> str:
 
 def autokey(mode: str, text: str, key: int) -> str:
     """
-    Applies the autokey cipher
+    Encrypts/decrypts text using the autokey cipher
 
     Parameters
     ----------
@@ -330,7 +330,21 @@ def autokey(mode: str, text: str, key: int) -> str:
     return message
 
 
-def bit_to_str(bits: list) -> list:
+def bit_to_str(bits: list) -> str:
+    """
+    Converts bits from list type to string type
+
+    Parameters
+    ----------
+    bits : list
+        list of bits to convert
+
+    Returns
+    -------
+    bit_str : str
+        bits formatted as a string
+    """
+
     bit_str = str()
     for bit in bits:
         bit_str += str(bit)
@@ -338,7 +352,28 @@ def bit_to_str(bits: list) -> list:
     return bit_str
 
 
-def SPN(plaintext: list, keys: list, s_boxes: dict, permutation: list) -> list:
+def SPN(plaintext: list, keys: list[list], s_boxes: dict[list], permutation: list) -> list:
+    """
+    Encrypts using the SPN (Substitution Permutation Network) cipher
+    #need to add decryption
+
+    Parameters
+    ----------
+    plaintext : list
+        plaintext represented as bits
+    keys : list[list]
+        list of keys represented as bits
+    s_boxes : dict[list]
+        dictionary containing the substitution rule for all S-boxes
+    permutation : list
+        list of positions representing the rule for permutation
+
+    Returns
+    -------
+    bits : list
+        ciphertext represented as bits
+    """
+
     bits = plaintext
     s_len = len(list(s_boxes)[0])
 
@@ -372,6 +407,27 @@ def SPN(plaintext: list, keys: list, s_boxes: dict, permutation: list) -> list:
 
 
 def fiestel(plaintext: list, keys: list, func, permutation: list) -> list:
+    """
+    Encrypts using the Fiestel cipher
+    #need to add decryption
+
+    Parameters
+    ----------
+    plaintext : list
+        plaintext represented as bits
+    keys : list[list]
+        list of keys represented as bits
+    func : function
+        function used to process the right bits and associated key
+    permutation : list
+        list of positions representing the rule for permutation
+
+    Returns
+    -------
+    bits : list
+        ciphertext represented as bits
+    """
+
     bits = plaintext
 
     #Initial permutation
@@ -405,10 +461,28 @@ def fiestel(plaintext: list, keys: list, func, permutation: list) -> list:
         new_bits.append(bits[p])
     bits = new_bits
     print(f'p^-1 : {bit_to_str(bits)}')
+
     return bits
 
 
-def example_rule(r_bits, key):
+def example_rule(r_bits: list, key: list) -> list:
+    """
+    Example of a function used in the Fiestel cipher
+    (Note that all functions must use the same number and type of inputs/outputs)
+    
+    Parameters
+    ----------
+    r_bits : list
+        bits from the right hand side of the total bitstring
+    keys : list
+        key represented as bits
+
+    Returns
+    -------
+    f_bits : list
+        resulting bits from the function
+    """
+
     f_bits = list()
     for i in range(len(key)):
         val = (r_bits[i]+key[i]) % 2
@@ -419,7 +493,7 @@ def example_rule(r_bits, key):
 
 def bf_shift(text: str) -> str:
     """
-    Brute forces the shift cipher
+    Uses a brute force attack on the shift cipher
 
     Parameters
     ----------
@@ -445,7 +519,7 @@ def bf_shift(text: str) -> str:
 
 def bf_autokey(text: str) -> str:
     """
-    Brute forces the autokey cipher
+    Uses a brute force attack on the autokey cipher
 
     Parameters
     ----------
