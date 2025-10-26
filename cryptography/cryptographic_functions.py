@@ -404,7 +404,6 @@ def feistel(plaintext: list, keys: list, permutation: list, func, **kwargs) -> l
     #Initial permutation
     bits = permute(bits, permutation)
     print(f'p : {bin_to_str(bits)}')
-
     #Rounds
     rounds = len(keys)
     half = int(len(bits)/2)
@@ -415,11 +414,14 @@ def feistel(plaintext: list, keys: list, permutation: list, func, **kwargs) -> l
         r_bits = XOR(f_bits, l_bits)
         bits = bits[half:] + r_bits
         print(f'r^{round+1} : {bin_to_str(bits)}')
-    
     #Final permutation
     inverse = [0] * len(permutation)
+    indexed = True if 0 in permutation else False
     for i in range(len(permutation)):
-        inverse[permutation[i]-1] = i + 1
+        if indexed:
+            inverse[permutation[i]] = i
+        else:
+            inverse[permutation[i]-1] = i + 1
     bits = permute(bits, inverse)
     print(f'p^-1 : {bin_to_str(bits)}')
 
@@ -428,7 +430,7 @@ def feistel(plaintext: list, keys: list, permutation: list, func, **kwargs) -> l
 
 def DES(r_bits, key, exp, red, perm):
     """
-    DES function used in Feistel cipher
+    DES (Data Encryption Standard) function, used in Feistel cipher
 
     Parameters
     ----------
