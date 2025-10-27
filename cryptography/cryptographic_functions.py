@@ -466,14 +466,11 @@ def DES(r_bits, key, exp, red, perm):
         c_val = bin_to_int(column)
         num = red[r_val][c_val]
         reduced_bits = int_to_bin(num, 4)
-        new_bits.extend(reduced_bits)
-    f_bits = new_bits
+        new_bits.append(reduced_bits)
     #Permutation
-    p_bits = list()
-    for i in range(0, len(f_bits), 8):
-        chunk = tuple(f_bits[i:i+8])
-        p_bits.extend(permute(chunk, perm))
-    f_bits = p_bits
+    f_bits = list()
+    for block in permute(new_bits, perm):
+        f_bits.extend(block)
 
     return f_bits
 
