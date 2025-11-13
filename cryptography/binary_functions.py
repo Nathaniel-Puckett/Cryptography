@@ -106,9 +106,7 @@ def XOR(bits_a: list, bits_b: list) -> list:
         XOR of bits_a and bits_b (mod2)
     """
 
-    bits_c = [0]*len(bits_a)
-    for i in range(len(bits_a)):
-        bits_c[i] = (bits_a[i]+bits_b[i]) % 2
+    bits_c = [(bits_a[i]+bits_b[i])%2 for i in range(len(bits_a))]
     
     return bits_c
 
@@ -137,3 +135,36 @@ def permute(bits: list, permutation: list) -> list:
         permuted_bits.append(bits[p])
     
     return permuted_bits
+
+
+def multiply_bytes(in_a: int, in_b: int) -> int:
+    """
+    Multiplies two bytes over F_2^8
+    Algorithm taken from the post below:
+    https://stackoverflow.com/questions/70261458/how-to-perform-addition-and-multiplication-in-f-28
+    
+    Parameters
+    ----------
+    in_a : int (<256)
+        Input byte A
+    in_b : int (<256)
+        Input byte B
+    
+    Returns
+    -------
+    result : int (<256)
+        Result of the multiplication of in_a and in_b over F_2^8
+    """
+    byte_a = int(in_a)
+    byte_b = int(in_b)
+    p = 0b100011011
+    result = 0
+    for i in range(8):
+        result = result << 1
+        if result & 0b100000000:
+            result = result ^ p
+        if byte_b & 0b010000000:
+            result = result ^ byte_a
+        byte_b = byte_b << 1
+
+    return result
