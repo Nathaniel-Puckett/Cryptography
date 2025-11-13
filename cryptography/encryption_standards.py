@@ -241,12 +241,33 @@ class AES:
     """
     Class for performing AES, 128 bit key length variant
     """
-    
-    def __init__(self, plaintext, subkeys):
+
+    def __init__(self, plaintext: list[list[int]], subkeys: list[list[int]]) -> None:
+        """
+        Initialization of class
+
+        Parameters
+        ----------
+        plaintext : list[list[int]]
+            Bytes of plaintext formatted as a 4x4 matrix
+        subkeys : list[list[int]]
+            Subkeys formatted as a 4x4 matrix
+        """
+
         self.bits = plaintext
         self.keys = subkeys
+        self.steps = False
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Pretty formatting for state
+
+        Returns
+        -------
+        str_rep : str
+            Matrix represented only by byte values and their positon
+        """
+
         str_rep = str()
         for i in range(4):
             for j in range(4):
@@ -255,7 +276,16 @@ class AES:
         
         return str_rep
 
-    def add_key(self, index):
+    def add_key(self, index: int) -> None:
+        """
+        XORs a subkey with the state
+
+        Parameters
+        ----------
+        index : int
+            Index of the subkey to use in list of subkeys
+        """
+
         new_bits = list()
         for i in range(4):
             new_row = list()
@@ -267,15 +297,25 @@ class AES:
             new_bits.append(new_row)
         
         self.bits = new_bits
+        print('Add key\n', self, sep='') if self.steps else None
     
-    def shift_rows(self):
+    def shift_rows(self) -> None:
+        """
+        Shifts rows of the state by 0, 1, 2, & 3 positions respectively
+        """
+
         new_bits = list()
         for i in range(4):
             new_bits.append(permute(self.bits[i], [(i)%4, (i+1)%4, (i+2)%4, (i+3)%4]))
 
         self.bits = new_bits
+        print('Shift rows\n', self, sep='') if self.steps else None
         
-    def mix_columns(self):
+    def mix_columns(self) -> None:
+        """
+        Performs matrix multiplication in F_2^8 with the MCOLUMN matrix
+        """
+
         np_bits = np.array(self.bits)
         new_bits = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
         for i in range(4):
@@ -287,8 +327,13 @@ class AES:
                 new_bits[j][i] = int(byte_jk)
         
         self.bits = new_bits
+        print('Mix columns\n', self, sep='') if self.steps else None
     
-    def sub_bytes(self):
+    def sub_bytes(self) -> None:
+        """
+        Substitutes bytes according to the S_BOX table
+        """
+
         new_bits = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
         for i in range(4):
             for j in range(4):
@@ -298,18 +343,26 @@ class AES:
                 new_bits[i][j] = s_val
         
         self.bits = new_bits
+        print('Sub bytes\n', self, sep='') if self.steps else None
     
-    def run(self, rounds, steps: bool = False):
+    def run(self, rounds: int, steps: bool = False) -> None:
+        """
+        Runs the AES algorithm
 
+        Parameters
+        ----------
+        rounds : int
+            Number of rounds to use
+        steps : bool
+            Show steps during encryption (default is false)
+        """
+
+        self.steps = steps
         print('Plaintext\n', self, sep='') if steps else None
+
         self.add_key(0)
-        print('Add key 0\n', self, sep='') if steps else None
         for round in range(1, rounds+2):
             self.sub_bytes()
-            print(f'Sub bytes {round}'+'\n', self, sep='') if steps else None
             self.shift_rows()
-            print(f'Shift rows {round}'+'\n', self, sep='') if steps else None
             self.mix_columns() if round != rounds+1 else None
-            print(f'Mix columns {round}'+'\n', self, sep='') if steps and round != rounds+1 else None
             self.add_key(round)
-            print(f'Add key {round}'+'\n', self, sep='') if steps else None
