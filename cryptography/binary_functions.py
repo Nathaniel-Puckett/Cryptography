@@ -1,10 +1,10 @@
-def bin_to_str(bits: list) -> str:
+def bin_to_str(bits: list[int]) -> str:
     """
     Converts bits from list type to string type
 
     Parameters
     ----------
-    bits : list
+    bits : list[int]
         list of bits to convert
 
     Returns
@@ -20,7 +20,7 @@ def bin_to_str(bits: list) -> str:
     return bit_str
 
 
-def str_to_bin(bit_str: str) -> list:
+def str_to_bin(bit_str: str) -> list[int]:
     """
     Converts bits from string type to list type
 
@@ -31,7 +31,7 @@ def str_to_bin(bit_str: str) -> list:
 
     Returns
     -------
-    bits : list
+    bits : list[int]
         list of bits
     """
 
@@ -42,7 +42,7 @@ def str_to_bin(bit_str: str) -> list:
     return bits
 
 
-def int_to_bin(num: int, size: int) -> list:
+def int_to_bin(num: int, size: int) -> list[int]:
     """
     Converts an integer into its binary representation
     
@@ -55,7 +55,7 @@ def int_to_bin(num: int, size: int) -> list:
     
     Returns
     -------
-    bits : list
+    bits : list[int]
         Binary representing number
     """
 
@@ -67,13 +67,13 @@ def int_to_bin(num: int, size: int) -> list:
     return bits
 
 
-def bin_to_int(bits):
+def bin_to_int(bits: list[int]) -> int:
     """
     Converts a bitstring to its integer representation
     
     Parameters
     ----------
-    bits : list
+    bits : list[int]
         The bitstring to convert to an integer
     
     Returns
@@ -89,15 +89,15 @@ def bin_to_int(bits):
     return num
 
 
-def XOR(bits_a: list, bits_b: list) -> list:
+def XOR(bits_a: list[int], bits_b: list[int]) -> list[int]:
     """
     XORs two binary numbers
     
     Parameters
     ----------
-    bits_a : list
+    bits_a : list[int]
         First bitstring to add
-    bits_b : list
+    bits_b : list[int]
         Second bitstring to add
     
     Returns
@@ -111,20 +111,20 @@ def XOR(bits_a: list, bits_b: list) -> list:
     return bits_c
 
 
-def permute(bits: list, permutation: list) -> list:
+def permute(bits: list[int], permutation: list[int]) -> list[int]:
     """
-    Permutes a sequence of bits
+    Permutes a sequence of bits (or any list of values)
     
     Parameters
     ----------
-    bits : list
+    bits : list[int]
         List of bits to permute
-    permutation : list
+    permutation : list[int]
         Rule used to permute bits (can start at 0 or 1)
     
     Returns
     -------
-    permuted_bits : list
+    permuted_bits : list[int]
         Permuted version of input bits
     """
 
@@ -155,9 +155,11 @@ def multiply_bytes(in_a: int, in_b: int) -> int:
     result : int (<256)
         Result of the multiplication of in_a and in_b over F_2^8
     """
+    
     byte_a = int(in_a)
     byte_b = int(in_b)
     p = 0b100011011
+
     result = 0
     for i in range(8):
         result = result << 1

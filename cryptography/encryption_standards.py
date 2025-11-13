@@ -338,7 +338,7 @@ class AES:
         for i in range(4):
             for j in range(4):
                 byte_ij = int_to_bin(self.bits[i][j], 8)
-                l_val, r_val = bin_to_int(byte_ij[i:i+4]), bin_to_int(byte_ij[i+4:i+8])
+                l_val, r_val = bin_to_int(byte_ij[:4]), bin_to_int(byte_ij[4:8])
                 s_val = S_BOX[l_val][r_val]
                 new_bits[i][j] = s_val
         
