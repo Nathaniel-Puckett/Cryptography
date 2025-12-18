@@ -96,7 +96,7 @@ def feistel(plaintext: int, keys: list[int], permutation: list[int], func, **kwa
 
     #Initial permutation
     bits = permute_bits(bits, permutation)
-    print(f'p : {format(bits, f'0{length}b')}')
+    print(f'p^+ : {format(bits, f'0{length}b')}')
     #Rounds
     rounds = len(keys)
     half = int(length/2)
@@ -117,7 +117,7 @@ def feistel(plaintext: int, keys: list[int], permutation: list[int], func, **kwa
         else:
             inverse[permutation[i]-1] = i + 1
     bits = permute_bits(bits, inverse)
-    print(f'p^-1 : {format(bits, f'0{length}b')}')
+    print(f'p^- : {format(bits, f'0{length}b')}')
 
     return bits
 
@@ -196,48 +196,48 @@ def example_rule(r_bits: int, key: int) -> int:
     return new_bits
 
 
-def AES_key_schedule(key: list[int], rotations: list[list[int]], steps: bool = False) -> list[list[int]]:
+def AES_key_schedule(key: int, rotations: list[int], steps: bool = False) -> list[int]:
     """
     AES key schedule for generating subkeys
     
     Parameters
     ----------
-    key : list[int]
+    key : int
         key bitstring used to generate subkeys
-    rotations : list[list[int]]
+    rotations : list[int]
         round constants for AES
 
     Returns
     -------
-    subkeys : list[list[int]]
+    subkeys : list[int]
         resulting subkeys from input key
     """
 
     subkeys = list()
     for round, rotation in enumerate(rotations):
-        subkey = list()
         last_subkey = key if round == 0 else subkeys[-1]
-        last_bytes = last_subkey[96:]
-        print(f'w_{3+4*round} : {format(bin_to_int(last_bytes), '08x')}') if steps else None
+        last_bytes = last_subkey & 0xffffffff
+        print(f'w_{3+4*round} : {format(last_bytes, '08x')}') if steps else None
 
-        s_bits = list()
+        bits = 0x0
         for i in range(0, 32, 8):
-            l_val, r_val = bin_to_int(last_bytes[i:i+4]), bin_to_int(last_bytes[i+4:i+8])
-            s_val = S_BOX[l_val][r_val]
-            s_bits.append([int(i) for i in format(s_val, '08b')])
-        s_bits = permute_list(s_bits, [1, 2, 3, 0])
-        bits = list()
-        for block in s_bits:
-            bits.extend(block)
-        next_bits = XOR(bits, rotation)
-        print(f'g(w_{3+4*round}) : {format(bin_to_int(next_bits), '08x')}') if steps else None
+            l_val = (last_bytes >> 28-i) & 0xf
+            r_val = (last_bytes >> 24-i) & 0xf
+            value = S_BOX[l_val][r_val]
+            bits ^= value
+            bits <<= 8
+        bits >>= 8
+        bits = ((bits << 8) ^ (bits >> 24)) & 0xffffffff
+        bits ^= rotation
+        print(f'g(w_{3+4*round}) : {format(bits, '08x')}') if steps else None
 
+        subkey = 0x0
         for i in range(0, 128, 32):
-            subkey_bytes = XOR(last_subkey[i:i+32], next_bits)
-            next_bits = subkey_bytes
-            subkey.extend(subkey_bytes)
+            subkey_bits = (last_subkey >>96-i) & 0xffffffff
+            bits ^= subkey_bits
+            subkey ^= (bits << 96-i)
         subkeys.append(subkey)
-        print(f'subkey {round} : {format(bin_to_int(subkey), '08x')}') if steps else None
+        print(f'subkey {round} : {format(subkey, '32x')}') if steps else None
         print() if steps else None
 
     return subkeys
@@ -296,10 +296,8 @@ class AES:
         for i in range(4):
             new_row = list()
             for j in range(4):
-                bit_byte = int_to_bin(self.bits[i][j], 8)
-                key_byte = int_to_bin(self.keys[index][i][j], 8)
-                new_byte = XOR(bit_byte, key_byte)
-                new_row.append(bin_to_int(new_byte))
+                new_byte = self.bits[i][j] ^ self.keys[index][i][j]
+                new_row.append(new_byte)
             new_bits.append(new_row)
         
         self.bits = new_bits
@@ -343,8 +341,8 @@ class AES:
         new_bits = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
         for i in range(4):
             for j in range(4):
-                byte_ij = int_to_bin(self.bits[i][j], 8)
-                l_val, r_val = bin_to_int(byte_ij[:4]), bin_to_int(byte_ij[4:])
+                byte_ij = format(self.bits[i][j], '08b')
+                l_val, r_val = int(byte_ij[:4], 2), int(byte_ij[4:], 2)
                 s_val = S_BOX[l_val][r_val]
                 new_bits[i][j] = s_val
         
