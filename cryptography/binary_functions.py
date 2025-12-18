@@ -1,46 +1,6 @@
-def bin_to_str(bits: list[int]) -> str:
-    """
-    Converts bits from list type to string type
-
-    Parameters
-    ----------
-    bits : list[int]
-        list of bits to convert
-
-    Returns
-    -------
-    bit_str : str
-        bits formatted as a string
-    """
-
-    bit_str = str()
-    for bit in bits:
-        bit_str += str(bit)
-
-    return bit_str
-
-
-def str_to_bin(bit_str: str) -> list[int]:
-    """
-    Converts bits from string type to list type
-
-    Parameters
-    ----------
-    bit_str : str
-        bits formatted as a string
-
-    Returns
-    -------
-    bits : list[int]
-        list of bits
-    """
-
-    bits = [0]*len(bit_str)
-    for i in range(len(bit_str)):
-        bits[i] = int(bit_str)
-
-    return bits
-
+"""
+Contains bit manipulation functions
+"""
 
 def int_to_bin(num: int, size: int) -> list[int]:
     """
@@ -111,30 +71,60 @@ def XOR(bits_a: list[int], bits_b: list[int]) -> list[int]:
     return bits_c
 
 
-def permute(bits: list[int], permutation: list[int]) -> list[int]:
+def permute_bits(bits: int, permutation: list[int]) -> int:
     """
-    Permutes a sequence of bits (or any list of values)
+    Permutes a sequence of bits
     
     Parameters
     ----------
-    bits : list[int]
-        List of bits to permute
+    bits : int
+        Bits to permute
     permutation : list[int]
         Rule used to permute bits (can start at 0 or 1)
     
     Returns
     -------
-    permuted_bits : list[int]
+    permuted_bits : int
         Permuted version of input bits
     """
 
-    permuted_bits = list()
+    length = len(permutation)
+    bit_str = format(bits, f'0{length}b')
+
+    permuted_bits = str()
+    zero = True if 0 in permutation else False
+    for p in permutation:
+        p = p if zero else p-1
+        permuted_bits += bit_str[p]
+    permuted_bits = int(permuted_bits, 2)
+    
+    return permuted_bits
+
+
+def permute_list(in_list: list, permutation: list[int]) -> list:
+    """
+    Permutes a list of values
+    
+    Parameters
+    ----------
+    in_list : list
+        List to permute
+    permutation : list[int]
+        Rule used to permute list (can start at 0 or 1)
+    
+    Returns
+    -------
+    permuted_list : list
+        Permuted version of input list
+    """
+
+    permuted_list = list()
     indexed = True if 0 in permutation else False
     for p in permutation:
         p = p if indexed else p-1
-        permuted_bits.append(bits[p])
+        permuted_list.append(in_list[p])
     
-    return permuted_bits
+    return permuted_list
 
 
 def multiply_bytes(in_a: int, in_b: int) -> int:

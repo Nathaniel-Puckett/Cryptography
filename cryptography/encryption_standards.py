@@ -24,10 +24,9 @@ MCOLUMN = [[0x02, 0x03, 0x01, 0x01],
            [0x03, 0x01, 0x01, 0x02]]
 
 
-def SPN(plaintext: list[int], keys: list[list[int]], s_boxes: dict[list[int]], permutation: list[int]) -> list[int]:
+def SPN(plaintext: int, keys: list[int], s_boxes: dict[int], permutation: list[int]) -> int:
     """
     Encrypts using the SPN (Substitution Permutation Network) cipher
-    #need to add decryption
 
     Parameters
     ----------
@@ -47,39 +46,39 @@ def SPN(plaintext: list[int], keys: list[list[int]], s_boxes: dict[list[int]], p
     """
 
     bits = plaintext
-    s_len = len(list(s_boxes)[0])
+    length = len(permutation)
 
     rounds = len(keys) - 1
     for round in range(rounds):
         #Add key
-        bits = XOR(keys[round], bits)
-        print(f'u^{round+1} : {bin_to_str(bits)}')
+        bits ^= keys[round]
+        print(f'u^{round+1} : {format(bits, f'0{length}b')}')
         #Apply s-boxes
-        for i in range(0, len(bits), s_len):
-            chunk = tuple(bits[i:i+s_len])
-            bits[i:i+s_len] = s_boxes[chunk]
-        print(f'v^{round+1} : {bin_to_str(bits)}')
+        for i in range(0, length, 4):
+            chunk = (bits >> i) & 0xf
+            bits ^= chunk << i
+            bits ^= s_boxes[chunk] << i
+        print(f'v^{round+1} : {format(bits, f'0{length}b')}')
         #Permute
         if round != rounds-1:
-            bits = permute(bits, permutation)
-            print(f'w^{round+1} : {bin_to_str(bits)}')
+            bits = permute_bits(bits, permutation)
+            print(f'w^{round+1} : {format(bits, f'0{length}b')}')
             print()
     #Final key addition
-    bits = XOR(keys[-1], bits)
+    bits ^= keys[-1]
     
     return bits
 
 
-def feistel(plaintext: list[int], keys: list[list[int]], permutation: list[int], func, **kwargs) -> list[int]:
+def feistel(plaintext: int, keys: list[int], permutation: list[int], func, **kwargs) -> int:
     """
     Encrypts using the Feistel cipher
-    #need to add decryption
 
     Parameters
     ----------
-    plaintext : list[int]
+    plaintext : int
         plaintext represented as bits
-    keys : list[list[int]]
+    keys : list[int]
         list of keys represented as bits
     func : function
         function used to process the right bits and associated key
@@ -88,25 +87,27 @@ def feistel(plaintext: list[int], keys: list[list[int]], permutation: list[int],
 
     Returns
     -------
-    bits : list[int]
+    bits : int
         ciphertext represented as bits
     """
 
     bits = plaintext
+    length = len(permutation)
 
     #Initial permutation
-    bits = permute(bits, permutation)
-    print(f'p : {bin_to_str(bits)}')
+    bits = permute_bits(bits, permutation)
+    print(f'p : {format(bits, f'0{length}b')}')
     #Rounds
     rounds = len(keys)
-    half = int(len(bits)/2)
+    half = int(length/2)
     for round in range(rounds):
-        l_bits = bits[:half]
-        r_bits = bits[half:]
+        l_bits = bits >> half
+        r_bits = bits ^ (l_bits << half)
         f_bits = func(r_bits, keys[round], **kwargs)
-        r_bits = XOR(f_bits, l_bits)
-        bits = bits[half:] + r_bits
-        print(f'r^{round+1} : {bin_to_str(bits)}')
+        bits ^= l_bits << half
+        bits <<= half
+        bits ^= f_bits ^ l_bits
+        print(f'r^{round+1} : {format(bits, f'0{length}b')}')
     #Final permutation
     inverse = [0] * len(permutation)
     indexed = True if 0 in permutation else False
@@ -115,21 +116,21 @@ def feistel(plaintext: list[int], keys: list[list[int]], permutation: list[int],
             inverse[permutation[i]] = i
         else:
             inverse[permutation[i]-1] = i + 1
-    bits = permute(bits, inverse)
-    print(f'p^-1 : {bin_to_str(bits)}')
+    bits = permute_bits(bits, inverse)
+    print(f'p^-1 : {format(bits, f'0{length}b')}')
 
     return bits
 
 
-def DES(r_bits: list[int], key: list[int], exp: list[int], red: list[list[int]], perm: list[int]) -> list[int]:
+def DES(r_bits: int, key: int, exp: list[int], red: list[list[int]], perm: list[int]) -> int:
     """
     DES (Data Encryption Standard) function, used in Feistel cipher
 
     Parameters
     ----------
-    r_bits : list[int]
+    r_bits : int
         bits from the right hand side of the total bitstring
-    key : list[int]
+    key : int
         key represented as bits
     exp : list[int]
         expansion rule (32->48 bits)
@@ -141,60 +142,61 @@ def DES(r_bits: list[int], key: list[int], exp: list[int], red: list[list[int]],
     
     Returns
     -------
-    f_bits : list[int]
+    bits : int
         resulting bits from the function
     """
 
     #Expansion
-    f_bits = list()
+    bits = 0
     for val in exp:
-        f_bits.append(r_bits[val-1])
+        bits ^= ((r_bits & (0x1 << 32-val)) >> 32-val)
+        bits <<= 1
+    bits >>= 1
     #Add key
-    f_bits = XOR(f_bits, key)
+    bits ^= key
     #Reduction
-    new_bits = list()
-    for i in range(0, len(f_bits), 6):
-        row, column = tuple(f_bits[i:i+2]), tuple(f_bits[i+2:i+6])
-        r_val = bin_to_int(row)
-        c_val = bin_to_int(column)
-        num = red[r_val][c_val]
-        reduced_bits = int_to_bin(num, 4)
-        new_bits.append(reduced_bits)
+    blocks = list()
+    for i in range(0, 48, 6):
+        row = (bits >> 46-i) & 0x3
+        column = (bits >> 42-i) & 0xf
+        value = red[row][column]
+        blocks.append(value)
     #Permutation
-    f_bits = list()
-    for block in permute(new_bits, perm):
-        f_bits.extend(block)
+    bits = 0
+    for val in permute_list(blocks, perm):
+        bits ^= val
+        bits <<= 4
+    bits >>= 4
 
-    return f_bits
+    return bits
 
 
-def example_rule(r_bits: list[int], key: list[int]) -> list[int]:
+def example_rule(r_bits: int, key: int) -> int:
     """
     Example of a function used in the Feistel cipher
-    (Note that all functions must use the same number and type of inputs/outputs)
     
     Parameters
     ----------
-    r_bits : list[int]
+    r_bits : int
         bits from the right hand side of the total bitstring
-    key : list[int]
+    key : int
         key represented as bits
 
     Returns
     -------
-    f_bits : list
+    new_bits : int
         resulting bits from the function
     """
 
-    f_bits = list()
-    for i in range(len(key)):
-        val = (r_bits[i]+key[i]) % 2
-        f_bits.append(val)
-    
-    return f_bits
+    new_bits = 0x0
+    new_bits ^= (r_bits & 0x8) ^ ((key & 0x1) << 3)
+    new_bits ^= ((r_bits & 0x1) << 2) ^ ((key & 0x8) >> 1)
+    new_bits ^= ((r_bits & 0x6) ^ (key & 0x6)) >> 1
+
+    return new_bits
 
 
-def AES_key_schedule(key: list[int], rotations: list[list[int]]) -> list[list[int]]:
+def AES_key_schedule(key: list[int], rotations: list[list[int]], steps: bool = False) -> list[list[int]]:
     """
     AES key schedule for generating subkeys
     
@@ -216,23 +218,27 @@ def AES_key_schedule(key: list[int], rotations: list[list[int]]) -> list[list[in
         subkey = list()
         last_subkey = key if round == 0 else subkeys[-1]
         last_bytes = last_subkey[96:]
+        print(f'w_{3+4*round} : {format(bin_to_int(last_bytes), '08x')}') if steps else None
 
         s_bits = list()
         for i in range(0, 32, 8):
             l_val, r_val = bin_to_int(last_bytes[i:i+4]), bin_to_int(last_bytes[i+4:i+8])
             s_val = S_BOX[l_val][r_val]
             s_bits.append([int(i) for i in format(s_val, '08b')])
-        s_bits = permute(s_bits, [1, 2, 3, 0])
+        s_bits = permute_list(s_bits, [1, 2, 3, 0])
         bits = list()
         for block in s_bits:
             bits.extend(block)
-
         next_bits = XOR(bits, rotation)
+        print(f'g(w_{3+4*round}) : {format(bin_to_int(next_bits), '08x')}') if steps else None
+
         for i in range(0, 128, 32):
             subkey_bytes = XOR(last_subkey[i:i+32], next_bits)
             next_bits = subkey_bytes
             subkey.extend(subkey_bytes)
         subkeys.append(subkey)
+        print(f'subkey {round} : {format(bin_to_int(subkey), '08x')}') if steps else None
+        print() if steps else None
 
     return subkeys
 
@@ -306,7 +312,7 @@ class AES:
 
         new_bits = list()
         for i in range(4):
-            new_bits.append(permute(self.bits[i], [(i)%4, (i+1)%4, (i+2)%4, (i+3)%4]))
+            new_bits.append(permute_list(self.bits[i], [(i)%4, (i+1)%4, (i+2)%4, (i+3)%4]))
 
         self.bits = new_bits
         print('Shift rows\n', self, sep='') if self.steps else None
@@ -338,7 +344,7 @@ class AES:
         for i in range(4):
             for j in range(4):
                 byte_ij = int_to_bin(self.bits[i][j], 8)
-                l_val, r_val = bin_to_int(byte_ij[:4]), bin_to_int(byte_ij[4:8])
+                l_val, r_val = bin_to_int(byte_ij[:4]), bin_to_int(byte_ij[4:])
                 s_val = S_BOX[l_val][r_val]
                 new_bits[i][j] = s_val
         
